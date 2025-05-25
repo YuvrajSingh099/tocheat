@@ -199,6 +199,7 @@ services:
     image: docker.n8n.io/n8nio/n8n
     restart: always
     environment:
+      - NODEJS_PREFER_IPV4=true 
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=$RDS_HOST
       - DB_POSTGRESDB_PORT=5432
