@@ -113,6 +113,12 @@ SSL_EMAIL=you@example.com
 EOL
 else
   echo ".env file already exists."
+
+  if ! grep -q "N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS" .env; then
+    echo "Adding N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS to existing .env file..."
+    echo "N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true" >> .env
+  fi
+  
 fi
 
 # Create init-data.sh file for PostgreSQL initialization if it doesn't exist
@@ -164,6 +170,20 @@ done
 echo "PostgreSQL is up - running init-data.sh to initialize the database..."
 ./init-data.sh "$RDS_HOST" "$POSTGRES_USER" "$POSTGRES_PASSWORD" "$POSTGRES_DB"
 
+# Check PostgreSQL SSL requirements
+echo "Checking PostgreSQL SSL requirements..."
+SSL_REQUIRED=$(PGPASSWORD=$POSTGRES_PASSWORD psql --host="$RDS_HOST" --username="$POSTGRES_USER" --dbname="postgres" -t -c "SHOW ssl;" 2>/dev/null | tr -d '[:space:]')
+
+if [ "$SSL_REQUIRED" = "on" ]; then
+  echo "PostgreSQL requires SSL connections. Enforcing SSL in configuration..."
+  sed -i 's/DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false/DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=true/' docker-compose.yml
+elif [ -z "$SSL_REQUIRED" ]; then
+  echo "WARNING: Could not determine SSL requirement. Defaulting to SSL enabled for safety."
+  sed -i 's/DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=false/DB_POSTGRESDB_SSL_REJECT_UNAUTHORIZED=true/' docker-compose.yml
+else
+  echo "PostgreSQL does not require SSL connections. Continuing with current configuration."
+fi
+
 # Create the Docker Compose file for n8n with Redis and Worker setup if it doesn't exist
 if [ ! -f "docker-compose.yml" ]; then
   echo "Creating Docker Compose file..."
@@ -209,6 +229,8 @@ services:
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://$DOMAIN_OR_IP${N8N_PATH}
       - N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
+      - DB_POSTGRESDB_TIMEOUT=30000
+      - DB_POSTGRESDB_CONNECTION_TIMEOUT=30000
     ports:
       - 5678:5678
     volumes:
