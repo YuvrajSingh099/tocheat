@@ -110,6 +110,11 @@ N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
 
 # Email for SSL certificate
 SSL_EMAIL=you@example.com
+
+# Fix for deprecations
+N8N_RUNNERS_ENABLED=true
+OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=true
+
 EOL
 else
   echo ".env file already exists."
@@ -170,6 +175,10 @@ if [ ! -f "docker-compose.yml" ]; then
   cat <<EOL > docker-compose.yml
 version: '3.8'
 
+env_file:
+  - .env
+
+
 volumes:
   n8n_storage:
   redis_storage:
@@ -209,6 +218,8 @@ services:
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://$DOMAIN_OR_IP${N8N_PATH}
       - N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
+      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED}
+      - OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=${OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS}
     ports:
       - 5678:5678
     volumes:
@@ -230,6 +241,9 @@ services:
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       - N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
+      - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED}
+      - OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=${OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS}
+      
     depends_on:
       - n8n
 EOL
@@ -299,6 +313,9 @@ server {
 
     location / {
         proxy_pass http://127.0.0.1:5678;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
