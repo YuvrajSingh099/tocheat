@@ -11,7 +11,7 @@ sudo systemctl start nginx
 sudo systemctl enable nginx
 
 # Install EPEL repository (for Certbot and other packages)
-sudo yum install -y epel-release
+#sudo yum install -y epel-release
 
 # Install Certbot for SSL certificates
 sudo yum install -y certbot python3-certbot-nginx
@@ -25,7 +25,7 @@ sudo systemctl enable crond
 sudo yum install -y python3 python3-pip
 
 # Install Git
-sudo yum install -y git
+#sudo yum install -y git
 
 # Install Docker
 sudo yum install -y docker
