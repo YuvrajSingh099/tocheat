@@ -229,7 +229,7 @@ services:
   n8n-worker:
     image: docker.n8n.io/n8nio/n8n
     restart: always
-    command: worker
+    command: ["n8n", "worker"]
     environment:
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=$RDS_HOST
@@ -243,7 +243,6 @@ services:
       - N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
       - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED}
       - OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=${OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS}
-      - WEBHOOK_URL=https://$DOMAIN_OR_IP${N8N_PATH}
       
     depends_on:
       - n8n
