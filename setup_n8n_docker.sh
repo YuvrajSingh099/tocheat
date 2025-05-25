@@ -243,6 +243,7 @@ services:
       - N8N_ENCRYPTION_KEY=$N8N_ENCRYPTION_KEY
       - N8N_RUNNERS_ENABLED=${N8N_RUNNERS_ENABLED}
       - OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS=${OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS}
+      - WEBHOOK_URL=https://$DOMAIN_OR_IP${N8N_PATH}
       
     depends_on:
       - n8n
@@ -320,6 +321,12 @@ server {
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
+
+        client_max_body_size 100M;
+        proxy_read_timeout 600s;
+        proxy_connect_timeout 600s;
+        proxy_send_timeout 600s;
+
     }
 
     listen 443 ssl;
